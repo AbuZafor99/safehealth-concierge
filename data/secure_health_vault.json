@@ -1,0 +1,167 @@
+{
+  "family_members": {
+    "member_01": {
+      "id": "member_01",
+      "name": "Sarah (Mom)",
+      "conditions": [
+        "hypertension"
+      ],
+      "current_medications": [
+        "Lisinopril"
+      ],
+      "schedule": [
+        {
+          "medication": "Lisinopril",
+          "dosage": "10mg",
+          "time": "08:00 AM",
+          "taken_today": false
+        }
+      ]
+    },
+    "member_02": {
+      "id": "member_02",
+      "name": "Alex (Dad)",
+      "conditions": [
+        "chronic pain"
+      ],
+      "current_medications": [
+        "Ibuprofen",
+        "Aspirin"
+      ],
+      "schedule": [
+        {
+          "medication": "Ibuprofen",
+          "dosage": "200mg",
+          "time": "02:00 PM",
+          "taken_today": false
+        },
+        {
+          "medication": "Aspirin",
+          "dosage": "81mg",
+          "time": "08:00 AM",
+          "taken_today": false
+        }
+      ]
+    },
+    "member_03": {
+      "id": "member_03",
+      "name": "Jake (Teen Son)",
+      "conditions": [],
+      "current_medications": [
+        "Vitamin D",
+        "Omega-3"
+      ],
+      "schedule": [
+        {
+          "medication": "Vitamin D",
+          "dosage": "1000IU",
+          "time": "08:00 AM",
+          "taken_today": false
+        },
+        {
+          "medication": "Omega-3",
+          "dosage": "500mg",
+          "time": "08:00 AM",
+          "taken_today": false
+        }
+      ]
+    },
+    "member_04": {
+      "id": "member_04",
+      "name": "Gran (Grandma)",
+      "conditions": [
+        "diabetes",
+        "high cholesterol",
+        "atrial fibrillation"
+      ],
+      "current_medications": [
+        "Warfarin",
+        "Metformin",
+        "Atorvastatin"
+      ],
+      "schedule": [
+        {
+          "medication": "Metformin",
+          "dosage": "500mg",
+          "time": "08:00 AM",
+          "taken_today": false
+        },
+        {
+          "medication": "Atorvastatin",
+          "dosage": "20mg",
+          "time": "09:00 PM",
+          "taken_today": false
+        },
+        {
+          "medication": "Warfarin",
+          "dosage": "5mg",
+          "time": "06:00 PM",
+          "taken_today": false
+        },
+        {
+          "medication": "Metformin",
+          "dosage": "500mg",
+          "time": "06:00 PM",
+          "taken_today": false
+        }
+      ]
+    }
+  },
+  "relationships": {
+    "member_01": {
+      "can_view": [
+        "member_02",
+        "member_03",
+        "member_04"
+      ]
+    }
+  },
+  "interaction_blacklist": {
+    "Lisinopril": [
+      "Potassium Supplements",
+      "NSAIDs",
+      "Ibuprofen",
+      "Aspirin"
+    ],
+    "Ibuprofen": [
+      "Aspirin",
+      "Anticoagulants",
+      "Lisinopril",
+      "Warfarin"
+    ],
+    "Aspirin": [
+      "Warfarin",
+      "Ibuprofen",
+      "Anticoagulants"
+    ],
+    "Warfarin": [
+      "Aspirin",
+      "Ibuprofen",
+      "Atorvastatin",
+      "Anticoagulants"
+    ],
+    "Metformin": [
+      "Alcohol",
+      "Contrast Dye"
+    ],
+    "Atorvastatin": [
+      "Warfarin",
+      "Grapefruit",
+      "Clarithromycin"
+    ]
+  },
+  "logs": [
+    {
+      "member_id": "member_04",
+      "medication": "Warfarin",
+      "timestamp": "2026-06-20T09:58:05.679848",
+      "status": "taken"
+    },
+    {
+      "member_id": "member_04",
+      "medication": "Warfarin",
+      "timestamp": "2026-06-20T10:34:17.558212",
+      "status": "taken"
+    }
+  ]
+}
