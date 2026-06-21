@@ -1,0 +1,8 @@
+.env
+venv/
+__pycache__/
+*.pyc
+*.pyo
+mcp_server/build/
+mcp_server/node_modules/
+.DS_Store
