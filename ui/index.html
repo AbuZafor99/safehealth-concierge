@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SafeHealth | Family Medication Concierge</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Toast notification (shown on member switch) -->
+    <div id="toast" class="toast" aria-live="polite"></div>
+
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="logo">
+                <span class="logo-icon">➕</span>
+                <h1>SafeHealth</h1>
+            </div>
+
+            <div class="member-selector">
+                <h3>Family Members</h3>
+                <div class="member-card active" data-id="member_01">
+                    <div class="avatar">S</div>
+                    <div class="info">
+                        <span class="name">Sarah (Mom)</span>
+                        <span class="status">1 Med Today</span>
+                    </div>
+                </div>
+                <div class="member-card" data-id="member_02">
+                    <div class="avatar">A</div>
+                    <div class="info">
+                        <span class="name">Alex (Dad)</span>
+                        <span class="status">2 Meds Today</span>
+                    </div>
+                </div>
+                <div class="member-card" data-id="member_03">
+                    <div class="avatar">J</div>
+                    <div class="info">
+                        <span class="name">Jake (Teen Son)</span>
+                        <span class="status">2 Supplements</span>
+                    </div>
+                </div>
+                <div class="member-card" data-id="member_04">
+                    <div class="avatar">G</div>
+                    <div class="info">
+                        <span class="name">Gran (Grandma)</span>
+                        <span class="status">3 Meds Today</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="profile-details" id="profile-details">
+                <h3>Current Medications</h3>
+                <ul id="med-list"></ul>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header>
+                <div class="status-bar" id="status-bar">
+                    <span class="online-dot" id="online-dot"></span>
+                    <span id="status-text">System Online &amp; Secure</span>
+                </div>
+                <div class="user-welcome">Hello, <span id="current-user-name">Sarah</span></div>
+            </header>
+
+            <div class="content-grid">
+                <!-- Chat Section -->
+                <section class="chat-section">
+                    <div class="chat-container">
+                        <div class="chat-header">
+                            <h3>Wellness Assistant</h3>
+                            <span class="subtitle">Securely processing your health data</span>
+                        </div>
+                        <div class="chat-messages" id="chat-messages">
+                            <div class="message assistant">
+                                Hello! I'm your SafeHealth concierge. How can I help you manage your medications today?
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" id="chat-input" placeholder="Ask about interactions, or log a dose...">
+                            <button id="send-btn">Send</button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Right Column: Schedule + Log History -->
+                <section class="schedule-section">
+                    <div class="schedule-card">
+                        <h3>Today's Schedule</h3>
+                        <div id="schedule-list"></div>
+                    </div>
+
+                    <div class="log-card">
+                        <h3>Recent Doses</h3>
+                        <ul id="log-list">
+                            <li class="log-empty">No doses logged yet today.</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+        </main>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
