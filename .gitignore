@@ -1,4 +1,3 @@
-.env
 venv/
 __pycache__/
 *.pyc
@@ -6,3 +5,5 @@ __pycache__/
 mcp_server/build/
 mcp_server/node_modules/
 .DS_Store
+config.bat
+node_modules
