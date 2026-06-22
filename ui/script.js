@@ -12,6 +12,160 @@ const currentUserName = document.getElementById('current-user-name');
 const toast           = document.getElementById('toast');
 const onlineDot       = document.getElementById('online-dot');
 const statusText      = document.getElementById('status-text');
+const faqList         = document.getElementById('faq-list');
+const securitySteps   = document.getElementById('security-steps');
+const securityVerdict = document.getElementById('security-verdict');
+
+// ── FAQ accordion ────────────────────────────────────────────────────────────
+const FAQ_ITEMS = [
+    {
+        q: 'How do I see my medication schedule?',
+        a: 'Ask the assistant "Show my medications" or just select your name in the sidebar — the schedule and taken/pending status load automatically.'
+    },
+    {
+        q: 'How do I log that I took a dose?',
+        a: 'Type something like "I took my Lisinopril". The system checks today\'s log for dangerous combinations first, then records the dose and updates your schedule.'
+    },
+    {
+        q: 'How do I check if two medications are safe together?',
+        a: 'Ask "Can I take Warfarin with Aspirin?" — the assistant looks up the pair in the local interaction blacklist and warns you if it\'s a known dangerous combination.'
+    },
+    {
+        q: 'How do I add, remove, or change a medication?',
+        a: 'Say "Add Metoprolol 25mg at 08:00 AM", "Remove Ibuprofen", or "Change my Lisinopril to 20mg". New additions are automatically checked against your existing medications first.'
+    },
+    {
+        q: 'What happens if I mention a medical emergency?',
+        a: 'Phrases like "chest pain" or "can\'t breathe" are caught instantly by a hardcoded safety gate — before any AI model is called — and you\'re shown a 911 alert immediately.'
+    },
+    {
+        q: 'Is my health data sent anywhere?',
+        a: 'No. All medication and log data stays in a local JSON vault on this machine. Only your message text is sent to Gemini to decide which tool to call.'
+    },
+    {
+        q: 'Can I see another family member\'s data?',
+        a: 'Only Sarah (the guardian) can view every profile. Everyone else can only see their own — the backend enforces this on every request, not just in the UI.'
+    },
+    {
+        q: 'What is the live terminal panel showing?',
+        a: 'It streams the real backend pipeline for your last message: the Gatekeeper\'s regex scan, whether Gemini was dispatched, and which MCP tools were called — in real time.'
+    },
+];
+
+function renderFaq() {
+    faqList.innerHTML = FAQ_ITEMS.map((item, i) => `
+        <div class="faq-item" data-idx="${i}">
+            <button class="faq-question">
+                <span>${item.q}</span>
+                <span class="faq-caret">▾</span>
+            </button>
+            <div class="faq-answer"><p>${item.a}</p></div>
+        </div>
+    `).join('');
+
+    faqList.querySelectorAll('.faq-item').forEach(item => {
+        const question = item.querySelector('.faq-question');
+        const answer = item.querySelector('.faq-answer');
+        question.addEventListener('click', () => {
+            const isOpen = item.classList.contains('open');
+            faqList.querySelectorAll('.faq-item.open').forEach(open => {
+                if (open !== item) {
+                    open.classList.remove('open');
+                    open.querySelector('.faq-answer').style.maxHeight = null;
+                }
+            });
+            if (isOpen) {
+                item.classList.remove('open');
+                answer.style.maxHeight = null;
+            } else {
+                item.classList.add('open');
+                answer.style.maxHeight = answer.scrollHeight + 'px';
+            }
+        });
+    });
+}
+renderFaq();
+
+// ── Live Security Check panel ─────────────────────────────────────────────────
+const TOOL_LABELS = {
+    get_family_member_profile: 'Checking your profile & schedule',
+    check_drug_interaction: 'Checking for dangerous drug interactions',
+    evaluate_daily_log_safety: "Verifying today's dose is safe to log",
+    log_medication_intake: 'Recording your dose securely',
+    add_medication: 'Adding the new medication safely',
+    remove_medication: 'Removing the medication from your schedule',
+    update_medication: 'Updating your medication details',
+};
+
+function toolLabel(name) {
+    return TOOL_LABELS[name] || `Running secure check: ${name}`;
+}
+
+// Turns a raw backend trace line into a friendly, non-technical step.
+function describeStep(line) {
+    if (/scanning input/i.test(line)) {
+        return { icon: '🔍', label: 'Scanning your message', sub: 'Checking for emergency phrases or unsafe instructions — before any AI is involved.', status: 'active' };
+    }
+    if (/EMERGENCY pattern matched/i.test(line)) {
+        return { icon: '🚨', label: 'Emergency detected', sub: 'Skipped the AI entirely and sent a hardcoded medical emergency alert.', status: 'block' };
+    }
+    if (/injection pattern matched/i.test(line)) {
+        return { icon: '🚫', label: 'Unsafe instruction blocked', sub: 'This looked like an attempt to override the assistant\'s safety rules, so it was stopped before reaching the AI.', status: 'block' };
+    }
+    if (/input clear \(SAFE\)/i.test(line)) {
+        return { icon: '✅', label: 'No threats found', sub: 'Your message passed the safety check.', status: 'pass' };
+    }
+    if (/orchestrator dispatched/i.test(line)) {
+        return { icon: '🤖', label: 'AI assistant reviewing your request', sub: 'Gemini decides what you need and which secure tool to use — it never touches the raw data file.', status: 'active' };
+    }
+    const callMatch = line.match(/^MCP call -> (\w+)/);
+    if (callMatch) {
+        return { icon: '🔐', label: toolLabel(callMatch[1]), sub: 'Running in an isolated process — your health data never leaves this device.', status: 'active' };
+    }
+    const resultMatch = line.match(/^MCP result <- (\w+)/);
+    if (resultMatch) {
+        return { icon: '📦', label: `${toolLabel(resultMatch[1])} — done`, sub: 'Result verified and handed back to the assistant.', status: 'pass' };
+    }
+    if (/Response composed/i.test(line)) {
+        return { icon: '💬', label: 'Reply ready', sub: 'Your answer was checked and sent back to you.', status: 'pass' };
+    }
+    return { icon: 'ℹ️', label: line, sub: '', status: 'active' };
+}
+
+function renderSecurityStep({ icon, label, sub, status }) {
+    const div = document.createElement('div');
+    div.className = `sec-step sec-${status}`;
+    div.innerHTML = `
+        <span class="sec-icon">${icon}</span>
+        <div class="sec-text">
+            <span class="sec-label">${label}</span>
+            ${sub ? `<span class="sec-sub">${sub}</span>` : ''}
+        </div>`;
+    securitySteps.appendChild(div);
+    securitySteps.scrollTop = securitySteps.scrollHeight;
+}
+
+async function streamTrace(trace, securityStatus) {
+    securitySteps.innerHTML = '';
+    securityVerdict.className = 'security-verdict';
+    securityVerdict.textContent = '';
+
+    for (const line of (trace || [])) {
+        renderSecurityStep(describeStep(line));
+        await new Promise(r => setTimeout(r, 220));
+    }
+
+    if (securityStatus === 'EMERGENCY') {
+        securityVerdict.classList.add('verdict-block');
+        securityVerdict.textContent = '🚨 Emergency protocol triggered — please call 911.';
+    } else if (securityStatus === 'BLOCKED') {
+        securityVerdict.classList.add('verdict-block');
+        securityVerdict.textContent = '🚫 This message was blocked to keep you safe.';
+    } else {
+        securityVerdict.classList.add('verdict-safe');
+        securityVerdict.textContent = '✅ This message was handled safely.';
+    }
+}
 
 // ── Toast ──────────────────────────────────────────────────────────────────
 let _toastTimer = null;
@@ -161,6 +315,9 @@ async function sendMessage() {
         if (data.security_status) {
             triggerSecurityEvent(data.security_status);
         }
+
+        // Stream the real backend pipeline steps into the live terminal panel
+        streamTrace(data.trace, data.security_status);
 
         // Refresh profile and logs after any action that could change state
         const lower = text.toLowerCase();

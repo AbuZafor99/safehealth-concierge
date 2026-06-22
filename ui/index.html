@@ -56,6 +56,11 @@
                 <h3>Current Medications</h3>
                 <ul id="med-list"></ul>
             </div>
+
+            <div class="faq-section">
+                <h3>How to use SafeHealth</h3>
+                <div class="faq-list" id="faq-list"></div>
+            </div>
         </aside>
 
         <!-- Main Content -->
@@ -88,18 +93,35 @@
                     </div>
                 </section>
 
-                <!-- Right Column: Schedule + Log History -->
+                <!-- Right Column: Schedule + Log History + Security Check -->
                 <section class="schedule-section">
                     <div class="schedule-card">
                         <h3>Today's Schedule</h3>
-                        <div id="schedule-list"></div>
+                        <div id="schedule-list" class="scroll-area"></div>
                     </div>
 
                     <div class="log-card">
                         <h3>Recent Doses</h3>
-                        <ul id="log-list">
+                        <ul id="log-list" class="scroll-area">
                             <li class="log-empty">No doses logged yet today.</li>
                         </ul>
+                    </div>
+
+                    <div class="security-card">
+                        <div class="security-header">
+                            <h3>Security Check</h3>
+                            <span class="subtitle">How this platform protects you, for every message</span>
+                        </div>
+                        <div class="security-steps scroll-area" id="security-steps">
+                            <div class="sec-step sec-idle">
+                                <span class="sec-icon">🛡️</span>
+                                <div class="sec-text">
+                                    <span class="sec-label">Ready</span>
+                                    <span class="sec-sub">Send a message to see the live safety check.</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="security-verdict" id="security-verdict"></div>
                     </div>
                 </section>
             </div>

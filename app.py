@@ -31,7 +31,11 @@ def chat():
         return jsonify({"error": "No message provided"}), 400
 
     response, security_status = workflow.run(user_input, sender_id)
-    return jsonify({"response": response, "security_status": security_status})
+    return jsonify({
+        "response": response,
+        "security_status": security_status,
+        "trace": workflow.last_trace,
+    })
 
 
 @app.route('/api/profile/<member_id>', methods=['GET'])

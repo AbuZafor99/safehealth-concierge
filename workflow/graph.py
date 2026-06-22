@@ -31,6 +31,10 @@ import google.genai.types as genai_types
 # copy of the context, so concurrent Flask requests never cross-contaminate.
 _sender_ctx: ContextVar[str] = ContextVar("sender_id", default="unknown")
 
+# Carries a per-request trace list (for the UI's live security/backend feed)
+# into _run_agent the same way _sender_ctx carries the sender_id.
+_trace_ctx: ContextVar[list] = ContextVar("trace", default=None)
+
 # ── Gatekeeper patterns ─────────────────────────────────────────────────────
 # The Gatekeeper is pure Python and never delegates to any LLM.
 # An LLM-based gate can itself be jailbroken; a regex cannot.
@@ -268,6 +272,7 @@ _runner = Runner(
 
 async def _run_agent(user_input: str, sender_id: str) -> str:
     """Creates a per-request session and runs the ADK agent asynchronously."""
+    trace = _trace_ctx.get()
     try:
         # Store sender_id in the async context so tool functions can read it
         # without it being passed explicitly through the ADK call stack.
@@ -284,16 +289,28 @@ async def _run_agent(user_input: str, sender_id: str) -> str:
             parts=[genai_types.Part.from_text(text=tagged_message)],
         )
 
+        if trace is not None:
+            trace.append("Gemini 2.5 Flash Lite orchestrator dispatched")
+
         final_response = ""
         async for event in _runner.run_async(
             user_id=sender_id,
             session_id=session.id,
             new_message=content,
         ):
+            if trace is not None:
+                for fc in event.get_function_calls():
+                    trace.append(f"MCP call -> {fc.name}({fc.args})")
+                for fr in event.get_function_responses():
+                    trace.append(f"MCP result <- {fr.name}: {fr.response}")
+
             # Collect the last final response; let the generator exhaust naturally
             # to avoid OpenTelemetry context detach warnings from early break.
             if event.is_final_response() and event.content and event.content.parts:
                 final_response = event.content.parts[0].text
+
+        if trace is not None:
+            trace.append("Response composed and returned to client")
 
         return final_response or "I'm sorry, I couldn't process that request right now."
 
@@ -330,6 +347,11 @@ class SafeHealthWorkflow:
     [4. MCP subprocess] ← JSON-RPC over stdio → reads/writes secure_health_vault.json
     """
 
+    def __init__(self):
+        # Populated by the most recent run() call — read by app.py to feed
+        # the UI's live backend/security trace panel.
+        self.last_trace: list[str] = []
+
     def reset_daily_flags(self) -> dict:
         return _mcp.call("reset_daily_flags", {})
 
@@ -341,17 +363,31 @@ class SafeHealthWorkflow:
         Returns (response_text, security_status).
         security_status is one of: 'SAFE', 'BLOCKED', 'EMERGENCY'.
         """
+        trace = [f"Gatekeeper: scanning input ({len(user_input)} chars) for injection/emergency patterns"]
+
         # Node 1: Gatekeeper (pure Python)
         status = evaluate_security(user_input)
 
         if status == "EMERGENCY":
+            trace.append("Gatekeeper: EMERGENCY pattern matched — short-circuiting before any LLM call")
+            self.last_trace = trace
             return _EMERGENCY_REPLY, "EMERGENCY"
 
         if status == "UNSAFE":
+            trace.append("Gatekeeper: injection pattern matched — request BLOCKED before any LLM call")
+            self.last_trace = trace
             return _BLOCKED_REPLY, "BLOCKED"
 
+        trace.append("Gatekeeper: input clear (SAFE)")
+
         # Nodes 2+3+4: ADK LlmAgent (Gemini) handles everything downstream
-        response = asyncio.run(_run_agent(user_input, sender_id))
+        token = _trace_ctx.set(trace)
+        try:
+            response = asyncio.run(_run_agent(user_input, sender_id))
+        finally:
+            _trace_ctx.reset(token)
+
+        self.last_trace = trace
         return response, "SAFE"
 
 
